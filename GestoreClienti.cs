@@ -22,19 +22,15 @@ namespace AssemblyGestore
         // CERCA //
         public List<Cliente> CercaCliente(string parametroRicerca, string scelta)
         {
-            // Crea una nuova lista vuota per memorizzare i clienti trovati
-            List<Cliente> clientiTrovati = new List<Cliente>();
+            List<Cliente> clientiTrovati = new List<Cliente>();  // Crea una nuova lista vuota per memorizzare i clienti trovati
 
             try
             {
-                // Utilizza un blocco using per gestire la connessione al database
                 using (MySqlConnection connection = new MySqlConnection(_connectionDB))
                 {
-                    // Apre la connessione al database
                     connection.Open();
 
-                    // Prepara la query SQL per cercare il cliente in base alla scelta dell'utente
-                    string query = $"SELECT * FROM Clienti WHERE {scelta} = @parametroRicerca";
+                    string query = $"SELECT * FROM Clienti WHERE {scelta} = @parametroRicerca"; // Query SQL per cercare il cliente in base alla scelta dell'utente
 
                     // Crea un nuovo comando MySQL con la query e la connessione al database
                     using (MySqlCommand command = new MySqlCommand(query, connection))
@@ -48,6 +44,7 @@ namespace AssemblyGestore
                             // Leggi i risultati riga per riga
                             while (reader.Read())
                             {
+
                                 // Crea un nuovo oggetto Cliente dai dati letti
                                 Cliente cliente = new Cliente(
                                     reader.GetString("ID"),
@@ -69,6 +66,11 @@ namespace AssemblyGestore
                 // Lancia un'eccezione InvalidOperationException con un messaggio personalizzato
                 throw new InvalidOperationException("Errore durante la ricerca dei clienti.", ex);
             }
+            catch (Exception ex)
+            {
+                // Lancia un'eccezione InvalidOperationException con un messaggio personalizzato
+                throw new InvalidOperationException("Non hai inserito un input valido.", ex);
+            }
 
             // Restituisce la lista dei clienti trovati
             return clientiTrovati;
@@ -76,53 +78,61 @@ namespace AssemblyGestore
 
         public void AggiungiCliente(Cliente nuovoCliente)
         {
-            using (MySqlConnection connection = new MySqlConnection(_connectionDB))
+            try
             {
-                connection.Open();
 
-                // Query per cercare un cliente con lo stesso ID
-                string query = "SELECT COUNT(*) FROM Clienti WHERE ID = @ID";
-
-                // Dichiarazione di un comando con la query e la connessione al database
-                using (MySqlCommand command = new MySqlCommand(query, connection))
+            
+                using (MySqlConnection connection = new MySqlConnection(_connectionDB))
                 {
-                    // Impostazione del valore del parametro "@ID" nel comando
-                    command.Parameters.AddWithValue("@ID", nuovoCliente.ID);
+                    connection.Open();
 
-                    // Uso ToInt32 perchè ExecuteScalar() fa partire il command e restituisce un oggetto, io ho bisogno di un numero per il conteggio - count conterrà il risutato del "COUNT"
-                    // (ExecuteScalar() prende il primo valore della prima riga del set di risultati, ExecuteReader() se avessi avuto più di un risultato) la query restituisce solo un valore poiché uso la funzione di aggregazione "COUNT" (conteggia le righe che soddisfano la condizione)
-                    int count = Convert.ToInt32(command.ExecuteScalar());
+                    // Query per cercare un cliente con lo stesso ID
+                    string query = "SELECT COUNT(*) FROM Clienti WHERE ID = @ID";
 
-                    if (count > 0) // Controllo se esiste già un cliente con lo stesso ID nel database
+                    // Dichiarazione di un comando con la query e la connessione al database
+                    using (MySqlCommand command = new MySqlCommand(query, connection))
                     {
-                        // Se esiste, lancio un'eccezione con un messaggio di errore
-                        throw new InvalidOperationException("L'ID del cliente esiste già nel database.");
+                        // Impostazione del valore del parametro "@ID" nel comando
+                        command.Parameters.AddWithValue("@ID", nuovoCliente.ID);
+
+                        // Uso ToInt32 perchè ExecuteScalar() fa partire il command e restituisce un oggetto, io ho bisogno di un numero per il conteggio - count conterrà il risutato del "COUNT"
+                        // (ExecuteScalar() prende il primo valore della prima riga del set di risultati, ExecuteReader() se avessi avuto più di un risultato) la query restituisce solo un valore poiché uso la funzione di aggregazione "COUNT" (conteggia le righe che soddisfano la condizione)
+                        int count = Convert.ToInt32(command.ExecuteScalar());
+
+                        if (count > 0) // Controllo se esiste già un cliente con lo stesso ID nel database
+                        {
+                            // Se esiste, lancio un'eccezione con un messaggio di errore
+                            throw new InvalidOperationException("L'ID del cliente esiste già nel database.");
+                        }
+                    }
+
+                    // Dichiarazione della query per inserire il nuovo cliente
+                    string insertQuery = "INSERT INTO Clienti (ID, Nome, Cognome, Citta, Sesso, DataDiNascita) " + "VALUES (@ID, @Nome, @Cognome, @Citta, @Sesso, @DataDiNascita)";
+
+                    // Dichiarazione di un comando con la query e la connessione al database
+                    using (MySqlCommand insertCommand = new MySqlCommand(insertQuery, connection))
+                    {
+                        // Impostazione dei valori dei parametri nel comando
+                        insertCommand.Parameters.Add("@ID", MySqlDbType.VarChar, 5).Value = nuovoCliente.ID; ;
+                        insertCommand.Parameters.Add("@Nome", MySqlDbType.VarChar, 50).Value = nuovoCliente.Nome;
+                        insertCommand.Parameters.Add("@Cognome", MySqlDbType.VarChar, 50).Value = nuovoCliente.Cognome;
+                        insertCommand.Parameters.Add("@Citta", MySqlDbType.VarChar, 50).Value = nuovoCliente.Citta;
+                        insertCommand.Parameters.Add("@Sesso", MySqlDbType.VarChar, 1).Value = nuovoCliente.Sesso;
+                        insertCommand.Parameters.Add("@DataDiNascita", MySqlDbType.Date).Value = nuovoCliente.DataDiNascita;
+
+                        // Esecuzione della query di inserimento e agginta del valore a rowsAffected
+                        int rowsAffected = insertCommand.ExecuteNonQuery();
+
+                        // Controllo quante righe ha inserito la query, deve essere 1
+                        if (rowsAffected != 1)
+                        {
+                            throw new InvalidOperationException("Errore durante l'inserimento del nuovo cliente.");
+                        }
                     }
                 }
-
-                // Dichiarazione della query per inserire il nuovo cliente
-                string insertQuery = "INSERT INTO Clienti (ID, Nome, Cognome, Citta, Sesso, DataDiNascita) " + "VALUES (@ID, @Nome, @Cognome, @Citta, @Sesso, @DataDiNascita)";
-
-                // Dichiarazione di un comando con la query e la connessione al database
-                using (MySqlCommand insertCommand = new MySqlCommand(insertQuery, connection))
-                {
-                    // Impostazione dei valori dei parametri nel comando
-                    insertCommand.Parameters.Add("@ID", MySqlDbType.VarChar, 5).Value = nuovoCliente.ID; ;
-                    insertCommand.Parameters.Add("@Nome", MySqlDbType.VarChar, 50).Value = nuovoCliente.Nome;
-                    insertCommand.Parameters.Add("@Cognome", MySqlDbType.VarChar, 50).Value = nuovoCliente.Cognome;
-                    insertCommand.Parameters.Add("@Citta", MySqlDbType.VarChar, 50).Value = nuovoCliente.Citta;
-                    insertCommand.Parameters.Add("@Sesso", MySqlDbType.VarChar, 1).Value = nuovoCliente.Sesso;
-                    insertCommand.Parameters.Add("@DataDiNascita", MySqlDbType.Date).Value = nuovoCliente.DataDiNascita;
-
-                    // Esecuzione della query di inserimento e agginta del valore a rowsAffected
-                    int rowsAffected = insertCommand.ExecuteNonQuery();
-
-                    // Controllo quante righe ha inserito la query, deve essere 1
-                    if (rowsAffected != 1)
-                    {
-                        throw new InvalidOperationException("Errore durante l'inserimento del nuovo cliente.");
-                    }
-                }
+            }catch(Exception ex)
+            {
+                throw new InvalidOperationException("Errore sconosciuto", ex);
             }
         }
 
@@ -187,6 +197,11 @@ namespace AssemblyGestore
                 //", ex" serve per stampare il messaggio di errore predefinito di MySqlException e capire il vero errore
                 throw new InvalidOperationException("Errore durante l'eliminazione del cliente.", ex);
                 //return false; // non serve più se c'è InvalidOperationException
+            }
+            catch (Exception ex)
+            {
+                // Lancia un'eccezione InvalidOperationException con un messaggio personalizzato
+                throw new InvalidOperationException("Non hai inserito un input valido.", ex);
             }
         }
 
