@@ -78,10 +78,8 @@ namespace AssemblyGestore
 
         public void AggiungiCliente(Cliente nuovoCliente)
         {
-            try
-            {
-
-            
+            //try
+            //{
                 using (MySqlConnection connection = new MySqlConnection(_connectionDB))
                 {
                     connection.Open();
@@ -130,10 +128,10 @@ namespace AssemblyGestore
                         }
                     }
                 }
-            }catch(Exception ex)
-            {
-                throw new InvalidOperationException("Errore sconosciuto", ex);
-            }
+            //}catch(Exception ex)
+            //{
+            //    throw new InvalidOperationException("Errore", ex);
+            //}
         }
 
         // MODIFICA //
