@@ -64,7 +64,7 @@ namespace AssemblyGestore
                     }
                 }
             }
-            catch (Exception ex)
+            catch (InvalidOperationException ex)
             {
                 // Lancia un'eccezione InvalidOperationException con un messaggio personalizzato
                 throw new InvalidOperationException("Errore durante la ricerca dei clienti.", ex);
@@ -158,11 +158,11 @@ namespace AssemblyGestore
             }
             catch (MySqlException ex)
             {
-                Console.WriteLine("Errore durante la modifica del cliente: " + ex.Message);
+                throw new InvalidOperationException("Modifica del cliente non riuscita.", ex);
             }
-            catch (InvalidOperationException ex)
+            catch (Exception ex)
             {
-                Console.WriteLine(ex.Message);
+                throw new InvalidOperationException("Si è verificato un errore sconosciuto durante la modifica del cliente.", ex);
             }
         }
 
