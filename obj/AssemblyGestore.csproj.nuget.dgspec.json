@@ -1,20 +1,24 @@
 {
   "format": 1,
   "restore": {
-    "C:\\Users\\d.dieleuterio\\source\\repos\\AssemblyGestore\\AssemblyGestore.csproj": {}
+    "C:\\Users\\danie\\source\\repos\\AssemblyGestore\\AssemblyGestore.csproj": {}
   },
   "projects": {
-    "C:\\Users\\d.dieleuterio\\source\\repos\\AssemblyGestore\\AssemblyGestore.csproj": {
+    "C:\\Users\\danie\\source\\repos\\AssemblyGestore\\AssemblyGestore.csproj": {
       "version": "1.0.0",
       "restore": {
-        "projectUniqueName": "C:\\Users\\d.dieleuterio\\source\\repos\\AssemblyGestore\\AssemblyGestore.csproj",
+        "projectUniqueName": "C:\\Users\\danie\\source\\repos\\AssemblyGestore\\AssemblyGestore.csproj",
         "projectName": "AssemblyGestore",
-        "projectPath": "C:\\Users\\d.dieleuterio\\source\\repos\\AssemblyGestore\\AssemblyGestore.csproj",
-        "packagesPath": "C:\\Users\\d.dieleuterio\\.nuget\\packages\\",
-        "outputPath": "C:\\Users\\d.dieleuterio\\source\\repos\\AssemblyGestore\\obj\\",
+        "projectPath": "C:\\Users\\danie\\source\\repos\\AssemblyGestore\\AssemblyGestore.csproj",
+        "packagesPath": "C:\\Users\\danie\\.nuget\\packages\\",
+        "outputPath": "C:\\Users\\danie\\source\\repos\\AssemblyGestore\\obj\\",
         "projectStyle": "PackageReference",
+        "fallbackFolders": [
+          "C:\\Program Files (x86)\\Microsoft Visual Studio\\Shared\\NuGetPackages"
+        ],
         "configFilePaths": [
-          "C:\\Users\\d.dieleuterio\\AppData\\Roaming\\NuGet\\NuGet.Config",
+          "C:\\Users\\danie\\AppData\\Roaming\\NuGet\\NuGet.Config",
+          "C:\\Program Files (x86)\\NuGet\\Config\\Microsoft.VisualStudio.FallbackLocation.config",
           "C:\\Program Files (x86)\\NuGet\\Config\\Microsoft.VisualStudio.Offline.config"
         ],
         "originalTargetFrameworks": [
@@ -22,14 +26,15 @@
         ],
         "sources": {
           "C:\\Program Files (x86)\\Microsoft SDKs\\NuGetPackages\\": {},
+          "C:\\Program Files\\dotnet\\library-packs": {},
           "https://api.nuget.org/v3/index.json": {}
         },
         "frameworks": {
           "net6.0": {
             "targetAlias": "net6.0",
             "projectReferences": {
-              "C:\\Users\\d.dieleuterio\\source\\repos\\ClientiLibrary\\ClientiLibrary\\ClientiLibrary.csproj": {
-                "projectPath": "C:\\Users\\d.dieleuterio\\source\\repos\\ClientiLibrary\\ClientiLibrary\\ClientiLibrary.csproj"
+              "C:\\Users\\danie\\source\\repos\\ClientiLibrary\\ClientiLibrary\\ClientiLibrary.csproj": {
+                "projectPath": "C:\\Users\\danie\\source\\repos\\ClientiLibrary\\ClientiLibrary\\ClientiLibrary.csproj"
               }
             }
           }
@@ -65,21 +70,25 @@
               "privateAssets": "all"
             }
           },
-          "runtimeIdentifierGraphPath": "C:\\Program Files\\dotnet\\sdk\\7.0.102\\RuntimeIdentifierGraph.json"
+          "runtimeIdentifierGraphPath": "C:\\Program Files\\dotnet\\sdk\\7.0.202\\RuntimeIdentifierGraph.json"
         }
       }
     },
-    "C:\\Users\\d.dieleuterio\\source\\repos\\ClientiLibrary\\ClientiLibrary\\ClientiLibrary.csproj": {
+    "C:\\Users\\danie\\source\\repos\\ClientiLibrary\\ClientiLibrary\\ClientiLibrary.csproj": {
       "version": "1.0.0",
       "restore": {
-        "projectUniqueName": "C:\\Users\\d.dieleuterio\\source\\repos\\ClientiLibrary\\ClientiLibrary\\ClientiLibrary.csproj",
+        "projectUniqueName": "C:\\Users\\danie\\source\\repos\\ClientiLibrary\\ClientiLibrary\\ClientiLibrary.csproj",
         "projectName": "ClientiLibrary",
-        "projectPath": "C:\\Users\\d.dieleuterio\\source\\repos\\ClientiLibrary\\ClientiLibrary\\ClientiLibrary.csproj",
-        "packagesPath": "C:\\Users\\d.dieleuterio\\.nuget\\packages\\",
-        "outputPath": "C:\\Users\\d.dieleuterio\\source\\repos\\ClientiLibrary\\ClientiLibrary\\obj\\",
+        "projectPath": "C:\\Users\\danie\\source\\repos\\ClientiLibrary\\ClientiLibrary\\ClientiLibrary.csproj",
+        "packagesPath": "C:\\Users\\danie\\.nuget\\packages\\",
+        "outputPath": "C:\\Users\\danie\\source\\repos\\ClientiLibrary\\ClientiLibrary\\obj\\",
         "projectStyle": "PackageReference",
+        "fallbackFolders": [
+          "C:\\Program Files (x86)\\Microsoft Visual Studio\\Shared\\NuGetPackages"
+        ],
         "configFilePaths": [
-          "C:\\Users\\d.dieleuterio\\AppData\\Roaming\\NuGet\\NuGet.Config",
+          "C:\\Users\\danie\\AppData\\Roaming\\NuGet\\NuGet.Config",
+          "C:\\Program Files (x86)\\NuGet\\Config\\Microsoft.VisualStudio.FallbackLocation.config",
           "C:\\Program Files (x86)\\NuGet\\Config\\Microsoft.VisualStudio.Offline.config"
         ],
         "originalTargetFrameworks": [
@@ -87,6 +96,7 @@
         ],
         "sources": {
           "C:\\Program Files (x86)\\Microsoft SDKs\\NuGetPackages\\": {},
+          "C:\\Program Files\\dotnet\\library-packs": {},
           "https://api.nuget.org/v3/index.json": {}
         },
         "frameworks": {
@@ -126,7 +136,7 @@
               "privateAssets": "all"
             }
           },
-          "runtimeIdentifierGraphPath": "C:\\Program Files\\dotnet\\sdk\\7.0.102\\RuntimeIdentifierGraph.json"
+          "runtimeIdentifierGraphPath": "C:\\Program Files\\dotnet\\sdk\\7.0.202\\RuntimeIdentifierGraph.json"
         }
       }
     }
