@@ -6,7 +6,9 @@ using System.Collections.Generic;
 using MySql.Data.MySqlClient;
 using System.Configuration;
 using System.Collections;
-
+using System.Reflection;
+using System.Reflection.Metadata;
+using Google.Protobuf.WellKnownTypes;
 
 namespace AssemblyGestore
 {
@@ -20,9 +22,24 @@ namespace AssemblyGestore
             _connectionDB = connectionDB;
         }
 
+        public void ControlloId(string ID)
+        {
+            // Controlla se la lunghezza dell'ID è minore di 1 o maggiore di 5, eccezione specifica appena arrive l'input dell'id
+            if ((ID == null) || ID.Length > 5 || ID.Length < 1 )
+            {
+                throw new Exception("La lunghezza dell'ID deve essere compresa tra 1 e 5 caratteri.");
+            }
+        }
+
         // CERCA //
         public List<Cliente> CercaCliente(string parametroRicerca, string scelta)
         {
+            // Controlla se la lunghezza dell'ID è minore di 1 o maggiore di 5, eccezione specifica appena arrive l'input dell'id
+            if (scelta == "ID" && (parametroRicerca.Length < 1 || parametroRicerca.Length > 5))
+            {
+                throw new ArgumentException("La lunghezza dell'ID deve essere compresa tra 1 e 5 caratteri.", nameof(parametroRicerca));
+            }
+
             List<Cliente> clientiTrovati = new List<Cliente>();  // Crea una nuova lista vuota per memorizzare i clienti trovati
 
             // Verifica che il parametro di ricerca non sia nullo o vuoto
@@ -85,18 +102,26 @@ namespace AssemblyGestore
                 throw new InvalidOperationException("Si è verificato un errore durante la ricerca dei clienti. Messaggio di errore: " + ex.Message, ex);
             
             }
-            
+            // Controlla se la lista dei clienti trovati è vuota // E' UN ECCEZIONE SPECIFICA, QUINDI LA METTO FUORI DAL BLOCCO TRY-CATCH,
+            if (clientiTrovati.Count == 0)
+            {
+                throw new InvalidOperationException("Nessun cliente trovato con il parametro di ricerca specificato.");
+            }
+
             // Restituisce la lista dei clienti trovati
             return clientiTrovati;
         }
 
         public void AggiungiCliente(Cliente cliente)
         {
+            ControlloId(cliente.ID);
             try
             {
+
                 using (MySqlConnection conn = new MySqlConnection(_connectionDB))
                 {
                     conn.Open();
+
 
                     string query = "INSERT INTO Clienti (ID, Nome, Cognome, Citta, Sesso, DataDiNascita) VALUES (@ID, @Nome, @Cognome, @Citta, @Sesso, @DataDiNascita)";
 
@@ -127,110 +152,89 @@ namespace AssemblyGestore
             }
         }
 
-        //public void AggiungiCliente(Cliente nuovoCliente)
-        //{
-        //    try
-        //    {
-        //        using (MySqlConnection connection = new MySqlConnection(_connectionDB))
-        //        {
-        //            connection.Open();
 
-        //            // Query per cercare un cliente con lo stesso ID
-        //            string query = "SELECT COUNT(*) FROM Clienti WHERE ID = @ID";
-
-        //            // Dichiarazione di un comando con la query e la connessione al database
-        //            using (MySqlCommand command = new MySqlCommand(query, connection))
-        //            {
-        //                // Impostazione del valore del parametro "@ID" nel comando
-        //                command.Parameters.AddWithValue("@ID", nuovoCliente.ID);
-
-        //                // Esecuzione della query e ottenimento del risultato in count
-        //                int count = Convert.ToInt32(command.ExecuteScalar());
-
-        //                if (count > 0) // Controllo se esiste già un cliente con lo stesso ID nel database
-        //                {
-        //                    // Se esiste, lancio un'eccezione con un messaggio di errore
-        //                    throw new InvalidOperationException("L'ID del cliente esiste già nel database.");
-        //                }
-        //            }
-
-        //            // Dichiarazione della query per inserire il nuovo cliente
-        //            string insertQuery = "INSERT INTO Clienti (ID, Nome, Cognome, Citta, Sesso, DataDiNascita) " + "VALUES (@ID, @Nome, @Cognome, @Citta, @Sesso, @DataDiNascita)";
-
-        //            // Dichiarazione di un comando con la query e la connessione al database
-        //            using (MySqlCommand insertCommand = new MySqlCommand(insertQuery, connection))
-        //            {
-        //                // Impostazione dei valori dei parametri nel comando
-        //                insertCommand.Parameters.Add("@ID", MySqlDbType.VarChar, 5).Value = nuovoCliente.ID;
-        //                insertCommand.Parameters.Add("@Nome", MySqlDbType.VarChar, 50).Value = nuovoCliente.Nome;
-        //                insertCommand.Parameters.Add("@Cognome", MySqlDbType.VarChar, 50).Value = nuovoCliente.Cognome;
-        //                insertCommand.Parameters.Add("@Citta", MySqlDbType.VarChar, 50).Value = nuovoCliente.Citta;
-        //                insertCommand.Parameters.Add("@Sesso", MySqlDbType.VarChar, 1).Value = nuovoCliente.Sesso;
-        //                insertCommand.Parameters.Add("@DataDiNascita", MySqlDbType.Date).Value = nuovoCliente.DataDiNascita;
-
-        //                // Esecuzione della query di inserimento e agginta del valore a rowsAffected
-        //                int rowsAffected = insertCommand.ExecuteNonQuery();
-
-        //                // Controllo quante righe ha inserito la query, deve essere 1
-        //                if (rowsAffected != 1)
-        //                {
-        //                    throw new InvalidOperationException("Errore durante l'inserimento del nuovo cliente.");
-        //                }
-        //            }
-        //        }
-        //    }
-        //    catch (MySqlException ex)
-        //    {
-        //        // Lancia un'eccezione con un messaggio personalizzato per gli errori di MySQL
-        //        throw new InvalidOperationException("Errore durante l'aggiunta del cliente. Messaggio di errore: " + ex.Message, ex);
-        //    }
-        //    catch (Exception ex)
-        //    {
-        //        // Lancia un'eccezione con un messaggio personalizzato per tutti gli altri errori
-        //        throw new InvalidOperationException("Si è verificato un errore durante l'aggiunta del cliente. Messaggio di errore: " + ex.Message, ex);
-        //    }
-        //}
-
-
-        // MODIFICA //
         public void ModificaCliente(string id, Cliente clienteModificato) //in input i dati da modificare (clienteModificato)
         {
+            MySqlConnection conn = null;
             try
             {
-                using (MySqlConnection conn = new MySqlConnection(_connectionDB))
+                conn = new MySqlConnection(_connectionDB);
+                conn.Open();
+
+                MySqlCommand checkCmd = new MySqlCommand("SELECT COUNT(*) FROM Clienti WHERE ID = @ID", conn);
+                checkCmd.Parameters.AddWithValue("@ID", id);
+                int count = Convert.ToInt32(checkCmd.ExecuteScalar());
+
+                if (string.IsNullOrEmpty(id))
                 {
-                    conn.Open();
-
-                    MySqlCommand checkCmd = new MySqlCommand("SELECT COUNT(*) FROM Clienti WHERE ID = @ID", conn);
-                    checkCmd.Parameters.AddWithValue("@ID", id);
-                    int count = Convert.ToInt32(checkCmd.ExecuteScalar());
-
-                    if (count == 0)
-                    {
-                        throw new InvalidOperationException("Il cliente con l'ID specificato non esiste nel database.");
-                    }
-
-                    MySqlCommand cmd = new MySqlCommand("UPDATE Clienti SET Nome = @Nome, Cognome = @Cognome, Citta = @Citta, Sesso = @Sesso, DataDiNascita = @DataDiNascita WHERE ID = @ID", conn);
-
-                    cmd.Parameters.Add("@ID", MySqlDbType.VarChar, 5).Value = id;
-                    cmd.Parameters.Add("@Nome", MySqlDbType.VarChar, 50).Value = clienteModificato.Nome;
-                    cmd.Parameters.Add("@Cognome", MySqlDbType.VarChar, 50).Value = clienteModificato.Cognome;
-                    cmd.Parameters.Add("@Citta", MySqlDbType.VarChar, 50).Value = clienteModificato.Citta;
-                    cmd.Parameters.Add("@Sesso", MySqlDbType.VarChar, 1).Value = clienteModificato.Sesso;
-                    cmd.Parameters.Add("@DataDiNascita", MySqlDbType.Date).Value = clienteModificato.DataDiNascita;
-
-                    cmd.ExecuteNonQuery();
+                    throw new ArgumentException("L'ID del cliente non può essere nullo o vuoto.", nameof(id));
                 }
+
+                if (clienteModificato == null)
+                {
+                    throw new ArgumentException("I dati del cliente da modificare non possono essere nulli.", nameof(clienteModificato));
+                }
+
+                if (count == 0)
+                {
+                    throw new InvalidOperationException("Il cliente con l'ID specificato non esiste nel database.");
+                }
+
+                PropertyInfo[] clientemodifi = clienteModificato.GetType().GetProperties();
+
+                foreach (PropertyInfo property in clientemodifi)
+                {
+                    object value = property.GetValue(clienteModificato);
+                    if (value == null || string.IsNullOrEmpty(value.ToString()))
+                    {
+                        throw new ArgumentNullException(property.Name, "Il parametro " + property.Name + " del cliente non può essere nullo o vuoto.");
+                    }
+                }
+
+                // Controlla il formato della data prima dell'aggiornamento del database
+                string[] formatiData = { "dd/MM/yyyy", "dd-MM-yyyy", "yyyyMMdd" };
+                if (!DateTime.TryParseExact(clienteModificato.DataDiNascita.ToString("yyyyMMdd"), formatiData, CultureInfo.InvariantCulture, DateTimeStyles.None, out _))
+                {
+                    throw new Exception("Il formato della data di nascita non è valido. Utilizzare uno dei seguenti formati: dd/MM/yyyy, dd-MM-yyyy, yyyyMMdd");
+                }
+
+                MySqlCommand cmd = new MySqlCommand("UPDATE Clienti SET Nome = @Nome, Cognome = @Cognome, Citta = @Citta, Sesso = @Sesso, DataDiNascita = @DataDiNascita WHERE ID = @ID", conn);
+
+                cmd.Parameters.Add("@ID", MySqlDbType.VarChar, 5).Value = id;
+                cmd.Parameters.Add("@Nome", MySqlDbType.VarChar, 50).Value = clienteModificato.Nome;
+                cmd.Parameters.Add("@Cognome", MySqlDbType.VarChar, 50).Value = clienteModificato.Cognome;
+                cmd.Parameters.Add("@Citta", MySqlDbType.VarChar, 50).Value = clienteModificato.Citta;
+                cmd.Parameters.Add("@Sesso", MySqlDbType.VarChar, 1).Value = clienteModificato.Sesso;
+                cmd.Parameters.Add("@DataDiNascita", MySqlDbType.Date).Value = clienteModificato.DataDiNascita;
+
+                cmd.ExecuteNonQuery();
             }
             catch (MySqlException ex)
             {
                 throw new InvalidOperationException("Modifica del cliente non riuscita.", ex);
             }
+            catch (ArgumentNullException ex)
+            {
+                throw new ArgumentNullException(ex.ParamName, ex.Message);
+            }
+            catch (InvalidOperationException ex)
+            {
+                throw new InvalidOperationException(ex.Message, ex);
+            }
             catch (Exception ex)
             {
                 throw new InvalidOperationException("Si è verificato un errore sconosciuto durante la modifica del cliente.", ex);
             }
+            // uso finally perché non ho lo "use" per la connessione del database
+            finally
+            {
+                if (conn != null)
+                {
+                    conn.Close();
+                }
+            }
         }
+
 
         // ELIMINA //
         public bool EliminaCliente(string id)
