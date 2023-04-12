@@ -20,29 +20,21 @@ namespace AssemblyGestore
 
         private void ValidaCliente(Cliente cliente)
         {
-            if (string.IsNullOrEmpty(cliente.Nome) || cliente.Nome.Length > 50)
+            if (string.IsNullOrEmpty(cliente.Nome) || cliente.Nome.Length > 50 ||
+                string.IsNullOrEmpty(cliente.Cognome) || cliente.Cognome.Length > 50 ||
+                string.IsNullOrEmpty(cliente.Citta) || cliente.Citta.Length > 50)
             {
-                throw new ArgumentException("La lunghezza del nome deve essere compresa tra 1 e 50 caratteri.", nameof(cliente.Nome));
-            }
-
-            if (string.IsNullOrEmpty(cliente.Cognome) || cliente.Cognome.Length > 50)
-            {
-                throw new ArgumentException("La lunghezza del cognome deve essere compresa tra 1 e 50 caratteri.", nameof(cliente.Cognome));
-            }
-
-            if (string.IsNullOrEmpty(cliente.Citta) || cliente.Citta.Length > 50)
-            {
-                throw new ArgumentException("La lunghezza della città deve essere compresa tra 1 e 50 caratteri.", nameof(cliente.Citta));
+                throw new ArgumentException("La lunghezza del nome, cognome e città deve essere compresa tra 1 e 50 caratteri.");
             }
 
             if (string.IsNullOrEmpty(cliente.Sesso) || cliente.Sesso.ToUpper() != "M" || cliente.Sesso.ToUpper() != "F")
             {
-                throw new ArgumentException("Il sesso deve essere 'M' o 'F'.", nameof(cliente.Sesso));
+                throw new ArgumentException("Il sesso deve essere 'M' o 'F'.");
             }
 
             if (cliente.DataDiNascita == null || cliente.DataDiNascita > DateTime.Now)
             {
-                throw new ArgumentException("La data di nascita non può essere nulla o futura.", nameof(cliente.DataDiNascita));
+                throw new ArgumentException("La data di nascita non può essere nulla o futura.");
             }
 
             ValidaDataDiNascita(cliente.DataDiNascita);
@@ -120,23 +112,24 @@ namespace AssemblyGestore
                         }
                     }
                 }
+                // Controlla se la lista dei clienti trovati è vuota // E' UN ECCEZIONE SPECIFICA, QUINDI LA METTO FUORI DAL BLOCCO TRY-CATCH,
+                if (clientiTrovati.Count == 0)
+                {
+                    throw new InvalidOperationException("Nessun cliente trovato con il parametro di ricerca specificato.");
+                }
             }
             catch (MySqlException ex)
             {
                 // ex.Message restituisce solo il messaggio di errore dell'eccezione, mentre ex restituisce l'intera eccezione, compresi i dettagli
-                throw new InvalidOperationException("Errore durante la ricerca dei clienti. Messaggio di errore: " + ex.Message, ex);
+                throw new InvalidOperationException("Errore durante connessine al  database. Messaggio di errore: " + ex);
             }
             catch (Exception ex)
             {
                 // Lancia un'eccezione con un messaggio personalizzato per tutti gli altri errori
-                throw new InvalidOperationException("Si è verificato un errore durante la ricerca dei clienti. Messaggio di errore: " + ex.Message, ex);
+                throw new InvalidOperationException("Si è verificato un errore durante la ricerca dei clienti. Messaggio di errore: " + ex.Message);
             
             }
-            // Controlla se la lista dei clienti trovati è vuota // E' UN ECCEZIONE SPECIFICA, QUINDI LA METTO FUORI DAL BLOCCO TRY-CATCH,
-            if (clientiTrovati.Count == 0)
-            {
-                throw new InvalidOperationException("Nessun cliente trovato con il parametro di ricerca specificato.");
-            }
+
 
             // Restituisce la lista dei clienti trovati
             return clientiTrovati;
@@ -224,17 +217,9 @@ namespace AssemblyGestore
             {
                 throw new InvalidOperationException("Modifica del cliente non riuscita.", ex);
             }
-            catch (ArgumentNullException ex)
-            {
-                throw new ArgumentNullException(ex.ParamName, ex.Message);
-            }
-            catch (InvalidOperationException ex)
-            {
-                throw new InvalidOperationException(ex.Message, ex);
-            }
             catch (Exception ex)
             {
-                throw new InvalidOperationException("Si è verificato un errore sconosciuto durante la modifica del cliente.", ex);
+                throw new Exception("Si è verificato un errore sconosciuto durante la modifica del cliente.", ex);
             }
             // uso finally perché non ho lo "use" per la connessione del database
             finally
