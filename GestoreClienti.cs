@@ -4,10 +4,7 @@ using System.Text;
 using System.Collections.Generic;
 //riferimenti database
 using MySql.Data.MySqlClient;
-using System.Configuration;
 using System.Collections;
-using System.Reflection;
-using System.Reflection.Metadata;
 
 namespace AssemblyGestore
 {
@@ -21,24 +18,58 @@ namespace AssemblyGestore
             _connectionDB = connectionDB;
         }
 
+        private void ValidaCliente(Cliente cliente)
+        {
+            if (string.IsNullOrEmpty(cliente.Nome) || cliente.Nome.Length > 50)
+            {
+                throw new ArgumentException("La lunghezza del nome deve essere compresa tra 1 e 50 caratteri.", nameof(cliente.Nome));
+            }
+
+            if (string.IsNullOrEmpty(cliente.Cognome) || cliente.Cognome.Length > 50)
+            {
+                throw new ArgumentException("La lunghezza del cognome deve essere compresa tra 1 e 50 caratteri.", nameof(cliente.Cognome));
+            }
+
+            if (string.IsNullOrEmpty(cliente.Citta) || cliente.Citta.Length > 50)
+            {
+                throw new ArgumentException("La lunghezza della città deve essere compresa tra 1 e 50 caratteri.", nameof(cliente.Citta));
+            }
+
+            if (string.IsNullOrEmpty(cliente.Sesso) || cliente.Sesso.ToUpper() != "M" || cliente.Sesso.ToUpper() != "F")
+            {
+                throw new ArgumentException("Il sesso deve essere 'M' o 'F'.", nameof(cliente.Sesso));
+            }
+
+            if (cliente.DataDiNascita == null || cliente.DataDiNascita > DateTime.Now)
+            {
+                throw new ArgumentException("La data di nascita non può essere nulla o futura.", nameof(cliente.DataDiNascita));
+            }
+
+            ValidaDataDiNascita(cliente.DataDiNascita);
+        }
+
         public void ControlloId(string ID)
         {
             // Controlla se la lunghezza dell'ID è minore di 1 o maggiore di 5, eccezione specifica appena arrive l'input dell'id
-            if ((ID == null) || ID.Length > 5 || ID.Length < 1 )
+            if (string.IsNullOrEmpty(ID) || ID.Length > 5 || ID.Length < 1 )
             {
                 throw new Exception("La lunghezza dell'ID deve essere compresa tra 1 e 5 caratteri.");
+            }
+        }
+
+        private void ValidaDataDiNascita(DateTime dataDiNascita)
+        {
+            // Controlla il formato della data prima dell'aggiornamento del database
+            string[] formatiData = { "dd/MM/yyyy", "dd-MM-yyyy", "yyyyMMdd" };
+            if (!DateTime.TryParseExact(dataDiNascita.ToString("yyyyMMdd"), formatiData, CultureInfo.InvariantCulture, DateTimeStyles.None, out _))
+            {
+                throw new Exception("Il formato della data di nascita non è valido. Utilizzare uno dei seguenti formati: dd/MM/yyyy, dd-MM-yyyy, yyyyMMdd");
             }
         }
 
         // CERCA //
         public List<Cliente> CercaCliente(string parametroRicerca, string scelta)
         {
-            // Controlla se la lunghezza dell'ID è minore di 1 o maggiore di 5, eccezione specifica appena arrive l'input dell'id
-            if (scelta == "ID" && (parametroRicerca.Length < 1 || parametroRicerca.Length > 5))
-            {
-                throw new ArgumentException("La lunghezza dell'ID deve essere compresa tra 1 e 5 caratteri.", nameof(parametroRicerca));
-            }
-
             List<Cliente> clientiTrovati = new List<Cliente>();  // Crea una nuova lista vuota per memorizzare i clienti trovati
 
             // Verifica che il parametro di ricerca non sia nullo o vuoto
@@ -114,13 +145,13 @@ namespace AssemblyGestore
         public void AggiungiCliente(Cliente cliente)
         {
             ControlloId(cliente.ID);
+            ValidaCliente(cliente);
             try
             {
 
                 using (MySqlConnection conn = new MySqlConnection(_connectionDB))
                 {
                     conn.Open();
-
 
                     string query = "INSERT INTO Clienti (ID, Nome, Cognome, Citta, Sesso, DataDiNascita) VALUES (@ID, @Nome, @Cognome, @Citta, @Sesso, @DataDiNascita)";
 
@@ -151,51 +182,32 @@ namespace AssemblyGestore
             }
         }
 
-
         public void ModificaCliente(string id, Cliente clienteModificato) //in input i dati da modificare (clienteModificato)
         {
+            ControlloId(id);
+            ValidaCliente(clienteModificato);
             MySqlConnection conn = null;
             try
             {
                 conn = new MySqlConnection(_connectionDB);
                 conn.Open();
 
+                // Se non esite l'id cercato il count sarà uguale a 0
                 MySqlCommand checkCmd = new MySqlCommand("SELECT COUNT(*) FROM Clienti WHERE ID = @ID", conn);
                 checkCmd.Parameters.AddWithValue("@ID", id);
                 int count = Convert.ToInt32(checkCmd.ExecuteScalar());
-
-                if (string.IsNullOrEmpty(id))
-                {
-                    throw new ArgumentException("L'ID del cliente non può essere nullo o vuoto.", nameof(id));
-                }
-
-                if (clienteModificato == null)
-                {
-                    throw new ArgumentException("I dati del cliente da modificare non possono essere nulli.", nameof(clienteModificato));
-                }
 
                 if (count == 0)
                 {
                     throw new InvalidOperationException("Il cliente con l'ID specificato non esiste nel database.");
                 }
 
-                PropertyInfo[] clientemodifi = clienteModificato.GetType().GetProperties();
-
-                foreach (PropertyInfo property in clientemodifi)
-                {
-                    object value = property.GetValue(clienteModificato);
-                    if (value == null || string.IsNullOrEmpty(value.ToString()))
-                    {
-                        throw new ArgumentNullException(property.Name, "Il parametro " + property.Name + " del cliente non può essere nullo o vuoto.");
-                    }
-                }
-
-                // Controlla il formato della data prima dell'aggiornamento del database
-                string[] formatiData = { "dd/MM/yyyy", "dd-MM-yyyy", "yyyyMMdd" };
-                if (!DateTime.TryParseExact(clienteModificato.DataDiNascita.ToString("yyyyMMdd"), formatiData, CultureInfo.InvariantCulture, DateTimeStyles.None, out _))
-                {
-                    throw new Exception("Il formato della data di nascita non è valido. Utilizzare uno dei seguenti formati: dd/MM/yyyy, dd-MM-yyyy, yyyyMMdd");
-                }
+                //// Controlla il formato della data prima dell'aggiornamento del database
+                //string[] formatiData = { "dd/MM/yyyy", "dd-MM-yyyy", "yyyyMMdd" };
+                //if (!DateTime.TryParseExact(clienteModificato.DataDiNascita.ToString("yyyyMMdd"), formatiData, CultureInfo.InvariantCulture, DateTimeStyles.None, out _))
+                //{
+                //    throw new Exception("Il formato della data di nascita non è valido. Utilizzare uno dei seguenti formati: dd/MM/yyyy, dd-MM-yyyy, yyyyMMdd");
+                //}
 
                 MySqlCommand cmd = new MySqlCommand("UPDATE Clienti SET Nome = @Nome, Cognome = @Cognome, Citta = @Citta, Sesso = @Sesso, DataDiNascita = @DataDiNascita WHERE ID = @ID", conn);
 
@@ -234,7 +246,6 @@ namespace AssemblyGestore
             }
         }
 
-
         // ELIMINA //
         public bool EliminaCliente(string id)
         {
@@ -264,35 +275,36 @@ namespace AssemblyGestore
         }
 
 
-        public bool VerificaIDUnivoco(string id)
-        {
-            using (MySqlConnection connection = new MySqlConnection(_connectionDB))
-            {
-                connection.Open();
-
-                // Selezionara tutti gli ID dal database
-                string query = "SELECT ID FROM clienti";
-
-                // Crea un oggetto MySqlCommand, passando la query e la connessione al db (procedura standard)
-                using (MySqlCommand command = new MySqlCommand(query, connection))
-                {
-                    // Legge gli ID dal database utilizzando il metodo ExecuteReader del command (MySqlCommand)
-                    using (MySqlDataReader reader = command.ExecuteReader())
-                    {
-                        // Controlla se l'ID cercato esiste già nella lista degli ID letti dal database
-                        //Il metodo Read() sposta il cursore del lettore sulla riga successiva del risultato, ritornando true se ci sono altre righe disponibili.
-                        while (reader.Read())
-                        {
-                            // GetString mi serve per leggere il valore della riga che cambierà di continuo grazie al while
-                            if (id == reader.GetString(0)) // Lo 0 serve per indicare che deve leggere le rihe della colonna 0
-                            {
-                                return false; // L'ID non è univoco
-                            }
-                        }
-                    }
-                }
-            }
-            return true; // L'ID è univoco
-        }
     }
 }
+
+        //public bool VerificaIDUnivoco(string id)
+        //{
+        //    using (MySqlConnection connection = new MySqlConnection(_connectionDB))
+        //    {
+        //        connection.Open();
+
+        //        // Selezionara tutti gli ID dal database
+        //        string query = "SELECT ID FROM clienti";
+
+        //        // Crea un oggetto MySqlCommand, passando la query e la connessione al db (procedura standard)
+        //        using (MySqlCommand command = new MySqlCommand(query, connection))
+        //        {
+        //            // Legge gli ID dal database utilizzando il metodo ExecuteReader del command (MySqlCommand)
+        //            using (MySqlDataReader reader = command.ExecuteReader())
+        //            {
+        //                // Controlla se l'ID cercato esiste già nella lista degli ID letti dal database
+        //                //Il metodo Read() sposta il cursore del lettore sulla riga successiva del risultato, ritornando true se ci sono altre righe disponibili.
+        //                while (reader.Read())
+        //                {
+        //                    // GetString mi serve per leggere il valore della riga che cambierà di continuo grazie al while
+        //                    if (id == reader.GetString(0)) // Lo 0 serve per indicare che deve leggere le rihe della colonna 0
+        //                    {
+        //                        return false; // L'ID non è univoco
+        //                    }
+        //                }
+        //            }
+        //        }
+        //    }
+        //    return true; // L'ID è univoco
+        //}
