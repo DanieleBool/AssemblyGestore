@@ -8,7 +8,6 @@ using System.Configuration;
 using System.Collections;
 using System.Reflection;
 using System.Reflection.Metadata;
-using Google.Protobuf.WellKnownTypes;
 
 namespace AssemblyGestore
 {
@@ -260,7 +259,6 @@ namespace AssemblyGestore
             }
             catch (Exception ex)
             {
-                // Lancia un'eccezione InvalidOperationException con un messaggio personalizzato
                 throw new InvalidOperationException("Non hai inserito un input valido.", ex);
             }
         }
