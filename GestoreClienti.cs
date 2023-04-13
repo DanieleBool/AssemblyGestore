@@ -27,7 +27,7 @@ namespace AssemblyGestore
                 throw new ArgumentException("La lunghezza del nome, cognome e città deve essere compresa tra 1 e 50 caratteri.");
             }
 
-            if (string.IsNullOrEmpty(cliente.Sesso) || cliente.Sesso.ToUpper() != "M" || cliente.Sesso.ToUpper() != "F")
+            if (string.IsNullOrEmpty(cliente.Sesso) || cliente.Sesso.ToUpper() != "M" && cliente.Sesso.ToUpper() != "F")
             {
                 throw new ArgumentException("Il sesso deve essere 'M' o 'F'.");
             }
