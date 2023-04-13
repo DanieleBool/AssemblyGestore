@@ -18,7 +18,7 @@ namespace AssemblyGestore
             _connectionDB = connectionDB;
         }
 
-        private void ValidaCliente(Cliente cliente)
+        public void ValidaCliente(Cliente cliente)
         {
             if (string.IsNullOrEmpty(cliente.Nome) || cliente.Nome.Length > 50 ||
                 string.IsNullOrEmpty(cliente.Cognome) || cliente.Cognome.Length > 50 ||
@@ -37,7 +37,7 @@ namespace AssemblyGestore
                 throw new ArgumentException("La data di nascita non può essere nulla o futura.");
             }
 
-            ValidaDataDiNascita(cliente.DataDiNascita);
+            ValidaData(cliente.DataDiNascita);
         }
 
         public void ControlloId(string ID)
@@ -49,7 +49,7 @@ namespace AssemblyGestore
             }
         }
 
-        private void ValidaDataDiNascita(DateTime dataDiNascita)
+        public void ValidaData(DateTime dataDiNascita)
         {
             // Controlla il formato della data prima dell'aggiornamento del database
             string[] formatiData = { "dd/MM/yyyy", "dd-MM-yyyy", "yyyyMMdd" };
