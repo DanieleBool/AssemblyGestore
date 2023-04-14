@@ -5,6 +5,7 @@ using System.Collections.Generic;
 //riferimenti database
 using MySql.Data.MySqlClient;
 using System.Collections;
+using MySqlX.XDevAPI;
 
 namespace AssemblyGestore
 {
@@ -16,47 +17,6 @@ namespace AssemblyGestore
         public GestoreClienti(string connectionDB)
         {
             _connectionDB = connectionDB;
-        }
-
-        public void ValidaCliente(Cliente cliente)
-        {
-            if (string.IsNullOrEmpty(cliente.Nome) || cliente.Nome.Length > 50 ||
-                string.IsNullOrEmpty(cliente.Cognome) || cliente.Cognome.Length > 50 ||
-                string.IsNullOrEmpty(cliente.Citta) || cliente.Citta.Length > 50)
-            {
-                throw new ArgumentException("La lunghezza del nome, cognome e città deve essere compresa tra 1 e 50 caratteri.");
-            }
-
-            if (string.IsNullOrEmpty(cliente.Sesso) || cliente.Sesso.ToUpper() != "M" && cliente.Sesso.ToUpper() != "F")
-            {
-                throw new ArgumentException("Il sesso deve essere 'M' o 'F'.");
-            }
-
-            if (cliente.DataDiNascita == null || cliente.DataDiNascita > DateTime.Now)
-            {
-                throw new ArgumentException("La data di nascita non può essere nulla o futura.");
-            }
-
-            ValidaData(cliente.DataDiNascita);
-        }
-
-        public void ControlloId(string ID)
-        {
-            // Controlla se la lunghezza dell'ID è minore di 1 o maggiore di 5, eccezione specifica appena arrive l'input dell'id
-            if (string.IsNullOrEmpty(ID) || ID.Length > 5 || ID.Length < 1 )
-            {
-                throw new Exception("La lunghezza dell'ID deve essere compresa tra 1 e 5 caratteri.");
-            }
-        }
-
-        public void ValidaData(DateTime dataDiNascita)
-        {
-            // Controlla il formato della data prima dell'aggiornamento del database
-            string[] formatiData = { "dd/MM/yyyy", "dd-MM-yyyy", "yyyyMMdd" };
-            if (!DateTime.TryParseExact(dataDiNascita.ToString("yyyyMMdd"), formatiData, CultureInfo.InvariantCulture, DateTimeStyles.None, out _))
-            {
-                throw new Exception("Il formato della data di nascita non è valido. Utilizzare uno dei seguenti formati: dd/MM/yyyy, dd-MM-yyyy, yyyyMMdd");
-            }
         }
 
         // CERCA //
@@ -126,25 +86,29 @@ namespace AssemblyGestore
             catch (Exception ex)
             {
                 // Lancia un'eccezione con un messaggio personalizzato per tutti gli altri errori
-                throw new InvalidOperationException("Si è verificato un errore durante la ricerca dei clienti. Messaggio di errore: " + ex.Message);
+                throw new InvalidOperationException(ex.Message);
             
             }
-
-
             // Restituisce la lista dei clienti trovati
             return clientiTrovati;
         }
 
         public void AggiungiCliente(Cliente cliente)
         {
-            ControlloId(cliente.ID);
-            ValidaCliente(cliente);
+            Cliente.ValidaId(cliente.ID);
+            Cliente.ValidaSesso(cliente.Sesso);
+            Cliente.ValidaData(cliente.DataDiNascita.ToString("dd/MM/yyyy"));
+            Cliente.ValidaInput(cliente.Nome);
+            Cliente.ValidaInput(cliente.Cognome);
+            Cliente.ValidaInput(cliente.Citta);
+            VerificaIdUnivoco("Clienti", "ID", cliente.ID);
             try
             {
-
                 using (MySqlConnection conn = new MySqlConnection(_connectionDB))
                 {
                     conn.Open();
+
+                    VerificaIdUnivoco("Clienti", "ID", cliente.ID);
 
                     string query = "INSERT INTO Clienti (ID, Nome, Cognome, Citta, Sesso, DataDiNascita) VALUES (@ID, @Nome, @Cognome, @Citta, @Sesso, @DataDiNascita)";
 
@@ -177,30 +141,19 @@ namespace AssemblyGestore
 
         public void ModificaCliente(string id, Cliente clienteModificato) //in input i dati da modificare (clienteModificato)
         {
-            ControlloId(id);
-            ValidaCliente(clienteModificato);
+            Cliente.ValidaId(id);
+            Cliente.ValidaSesso(clienteModificato.Sesso);
+            Cliente.ValidaData(clienteModificato.DataDiNascita.ToString());
+            Cliente.ValidaInput(clienteModificato.Nome);
+            Cliente.ValidaInput(clienteModificato.Cognome);
+            Cliente.ValidaInput(clienteModificato.Citta);
             MySqlConnection conn = null;
             try
             {
                 conn = new MySqlConnection(_connectionDB);
                 conn.Open();
 
-                // Se non esite l'id cercato il count sarà uguale a 0
-                MySqlCommand checkCmd = new MySqlCommand("SELECT COUNT(*) FROM Clienti WHERE ID = @ID", conn);
-                checkCmd.Parameters.AddWithValue("@ID", id);
-                int count = Convert.ToInt32(checkCmd.ExecuteScalar());
-
-                if (count == 0)
-                {
-                    throw new InvalidOperationException("Il cliente con l'ID specificato non esiste nel database.");
-                }
-
-                //// Controlla il formato della data prima dell'aggiornamento del database
-                //string[] formatiData = { "dd/MM/yyyy", "dd-MM-yyyy", "yyyyMMdd" };
-                //if (!DateTime.TryParseExact(clienteModificato.DataDiNascita.ToString("yyyyMMdd"), formatiData, CultureInfo.InvariantCulture, DateTimeStyles.None, out _))
-                //{
-                //    throw new Exception("Il formato della data di nascita non è valido. Utilizzare uno dei seguenti formati: dd/MM/yyyy, dd-MM-yyyy, yyyyMMdd");
-                //}
+                VerificaIdUnivoco("Clienti", "ID", clienteModificato.ID);
 
                 MySqlCommand cmd = new MySqlCommand("UPDATE Clienti SET Nome = @Nome, Cognome = @Cognome, Citta = @Citta, Sesso = @Sesso, DataDiNascita = @DataDiNascita WHERE ID = @ID", conn);
 
@@ -259,6 +212,23 @@ namespace AssemblyGestore
             }
         }
 
+        private void VerificaIdUnivoco(string tableName, string columnName, string id)
+        {
+            using (MySqlConnection conn = new MySqlConnection(_connectionDB))
+            {
+                conn.Open();
+                string query = $"SELECT COUNT(*) FROM {tableName} WHERE {columnName} = @ID";
+                MySqlCommand checkCmd = new MySqlCommand(query, conn);
+                checkCmd.Parameters.AddWithValue("@ID", id);
+                int count = Convert.ToInt32(checkCmd.ExecuteScalar());
+
+                // Se non esite l'id cercato il count sarà uguale a 0
+                if (count > 0)
+                {
+                    throw new InvalidOperationException("L'elemento con l'ID specificato è già presente nel database.");
+                }
+            }
+        }
 
     }
 }
