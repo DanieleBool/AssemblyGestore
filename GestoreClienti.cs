@@ -143,7 +143,7 @@ namespace AssemblyGestore
         {
             Cliente.ValidaId(id);
             Cliente.ValidaSesso(clienteModificato.Sesso);
-            Cliente.ValidaData(clienteModificato.DataDiNascita.ToString());
+            Cliente.ValidaData(clienteModificato.DataDiNascita.ToString("dd/MM/yyyy"));
             Cliente.ValidaInput(clienteModificato.Nome);
             Cliente.ValidaInput(clienteModificato.Cognome);
             Cliente.ValidaInput(clienteModificato.Citta);
