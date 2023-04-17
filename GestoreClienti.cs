@@ -101,14 +101,13 @@ namespace AssemblyGestore
             Cliente.ValidaInput(cliente.Nome);
             Cliente.ValidaInput(cliente.Cognome);
             Cliente.ValidaInput(cliente.Citta);
-            VerificaIdUnivoco("Clienti", "ID", cliente.ID);
+            VerificaIdUnivocoDB("Clienti", "ID", cliente.ID);
             try
             {
                 using (MySqlConnection conn = new MySqlConnection(_connectionDB))
                 {
                     conn.Open();
 
-                    VerificaIdUnivoco("Clienti", "ID", cliente.ID);
 
                     string query = "INSERT INTO Clienti (ID, Nome, Cognome, Citta, Sesso, DataDiNascita) VALUES (@ID, @Nome, @Cognome, @Citta, @Sesso, @DataDiNascita)";
 
@@ -153,7 +152,7 @@ namespace AssemblyGestore
                 conn = new MySqlConnection(_connectionDB);
                 conn.Open();
 
-                VerificaIdUnivoco("Clienti", "ID", clienteModificato.ID);
+                VerificaIdUnivocoDB("Clienti", "ID", clienteModificato.ID);
 
                 MySqlCommand cmd = new MySqlCommand("UPDATE Clienti SET Nome = @Nome, Cognome = @Cognome, Citta = @Citta, Sesso = @Sesso, DataDiNascita = @DataDiNascita WHERE ID = @ID", conn);
 
@@ -212,7 +211,7 @@ namespace AssemblyGestore
             }
         }
 
-        private void VerificaIdUnivoco(string tableName, string columnName, string id)
+        private void VerificaIdUnivocoDB(string tableName, string columnName, string id)
         {
             using (MySqlConnection conn = new MySqlConnection(_connectionDB))
             {
@@ -229,6 +228,24 @@ namespace AssemblyGestore
                 }
             }
         }
+        public void VerificaIdUnivoco(string id)
+        {
+            VerificaIdUnivocoDB("Clienti", "ID", id);
+        }
+        ////Per sicurezza il metodosopra rimane privato, questo mi sevirà nel Program.cs
+        //public bool VerificaIdPubblico(string id)
+        //{
+        //    using (MySqlConnection conn = new MySqlConnection(_connectionDB))
+        //    {
+        //        conn.Open();
+        //        string query = $"SELECT COUNT(*) FROM Clienti WHERE ID = @ID";
+        //        MySqlCommand checkCmd = new MySqlCommand(query, conn);
+        //        checkCmd.Parameters.AddWithValue("@ID", id);
+        //        int count = Convert.ToInt32(checkCmd.ExecuteScalar());
+
+        //        return count > 0;
+        //    }
+        //}
 
     }
 }
