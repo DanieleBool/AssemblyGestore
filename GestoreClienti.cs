@@ -186,6 +186,8 @@ namespace AssemblyGestore
         // ELIMINA //
         public bool EliminaCliente(string id)
         {
+            int rowsAffected;
+
             try
             {
                 using (MySqlConnection conn = new MySqlConnection(_connectionDB))
@@ -194,22 +196,28 @@ namespace AssemblyGestore
                     MySqlCommand cmd = new MySqlCommand("DELETE FROM Clienti WHERE ID = @ID", conn);
                     cmd.Parameters.Add("@ID", MySqlDbType.VarChar, 5).Value = id;
                     // ExecuteNonQuery() restituisce il numero di righe interessate dalla query non dei dati, quindi lo associo a rowsAffected
-                    int rowsAffected = cmd.ExecuteNonQuery();
-                    // Controllo se la query ha eliminato almeno una riga
-                    return rowsAffected > 0;
+                    rowsAffected = cmd.ExecuteNonQuery();
                 }
             }
             catch (MySqlException ex)
             {
                 //", ex" serve per stampare il messaggio di errore predefinito di MySqlException e capire il vero errore
                 throw new InvalidOperationException("Errore durante l'eliminazione del cliente.", ex);
-                //return false; // non serve più se c'è InvalidOperationException
             }
             catch (Exception ex)
             {
                 throw new InvalidOperationException("Non hai inserito un input valido.", ex);
             }
+
+            if (rowsAffected == 0)
+            {
+                throw new InvalidOperationException("Nessun cliente trovato con l'ID specificato.");
+            }
+
+            // Controllo se la query ha eliminato almeno una riga
+            return rowsAffected > 0;
         }
+
 
         private void VerificaIdUnivocoDB(string tableName, string columnName, string id)
         {
