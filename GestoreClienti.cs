@@ -12,7 +12,6 @@ namespace AssemblyGestore
     public class GestoreClienti : IGestoreC
     {
         private string _connectionDB;
-
         // Costruttore che accetta il percorso come argomento
         public GestoreClienti(string connectionDB)
         {
@@ -123,7 +122,6 @@ namespace AssemblyGestore
                         cmd.Parameters.Add("@Citta", MySqlDbType.VarChar, 50).Value = cliente.Citta;
                         cmd.Parameters.Add("@Sesso", MySqlDbType.VarChar, 1).Value = cliente.Sesso.ToUpper();
                         cmd.Parameters.Add("@DataDiNascita", MySqlDbType.Date).Value = cliente.DataDiNascita.ToString("yyyy-MM-dd");
-
                         cmd.ExecuteNonQuery();
                     }
                 }
@@ -168,8 +166,7 @@ namespace AssemblyGestore
                         cmd.Parameters.Add("@Cognome", MySqlDbType.VarChar, 50).Value = clienteModificato.Cognome;
                         cmd.Parameters.Add("@Citta", MySqlDbType.VarChar, 50).Value = clienteModificato.Citta;
                         cmd.Parameters.Add("@Sesso", MySqlDbType.VarChar, 1).Value = clienteModificato.Sesso.ToUpper();
-                        cmd.Parameters.Add("@DataDiNascita", MySqlDbType.Date).Value = clienteModificato.DataDiNascita;
-
+                        cmd.Parameters.Add("@DataDiNascita", MySqlDbType.Date).Value = clienteModificato.DataDiNascita.ToString("yyyy-MM-dd");
                         cmd.ExecuteNonQuery();
                     }
                 }
