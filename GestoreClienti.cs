@@ -95,6 +95,11 @@ namespace AssemblyGestore
 
         public void AggiungiCliente(Cliente cliente)
         {
+            if (cliente == null)
+            {
+                throw new ArgumentException("Il cliente passato in input è nullo.");
+            }
+
             Cliente.ValidaId(cliente.ID);
             Cliente.ValidaSesso(cliente.Sesso);
             Cliente.ValidaData(cliente.DataDiNascita.ToString("dd/MM/yyyy"));
@@ -108,7 +113,6 @@ namespace AssemblyGestore
                 {
                     conn.Open();
 
-
                     string query = "INSERT INTO Clienti (ID, Nome, Cognome, Citta, Sesso, DataDiNascita) VALUES (@ID, @Nome, @Cognome, @Citta, @Sesso, @DataDiNascita)";
 
                     using (MySqlCommand cmd = new MySqlCommand(query, conn))
@@ -117,8 +121,8 @@ namespace AssemblyGestore
                         cmd.Parameters.Add("@Nome", MySqlDbType.VarChar, 50).Value = cliente.Nome;
                         cmd.Parameters.Add("@Cognome", MySqlDbType.VarChar, 50).Value = cliente.Cognome;
                         cmd.Parameters.Add("@Citta", MySqlDbType.VarChar, 50).Value = cliente.Citta;
-                        cmd.Parameters.Add("@Sesso", MySqlDbType.VarChar, 1).Value = cliente.Sesso;
-                        cmd.Parameters.Add("@DataDiNascita", MySqlDbType.Date).Value = cliente.DataDiNascita;
+                        cmd.Parameters.Add("@Sesso", MySqlDbType.VarChar, 1).Value = cliente.Sesso.ToUpper();
+                        cmd.Parameters.Add("@DataDiNascita", MySqlDbType.Date).Value = cliente.DataDiNascita.ToString("yyyy-MM-dd");
 
                         cmd.ExecuteNonQuery();
                     }
@@ -136,50 +140,47 @@ namespace AssemblyGestore
                         throw new InvalidOperationException("Errore durante l'inserimento del cliente nel database.", ex);
                 }
             }
+            catch (NullReferenceException ex)
+            {
+                Console.WriteLine(ex);
+            }
         }
 
-        public void ModificaCliente(string id, Cliente clienteModificato) //in input i dati da modificare (clienteModificato)
+        public void ModificaCliente(string id, Cliente clienteModificato)
         {
-            Cliente.ValidaId(id);
-            Cliente.ValidaSesso(clienteModificato.Sesso);
-            Cliente.ValidaData(clienteModificato.DataDiNascita.ToString("dd/MM/yyyy"));
-            Cliente.ValidaInput(clienteModificato.Nome);
-            Cliente.ValidaInput(clienteModificato.Cognome);
-            Cliente.ValidaInput(clienteModificato.Citta);
-            MySqlConnection conn = null;
             try
             {
-                conn = new MySqlConnection(_connectionDB);
-                conn.Open();
+                Cliente.ValidaId(id);
+                Cliente.ValidaSesso(clienteModificato.Sesso);
+                Cliente.ValidaInput(clienteModificato.Nome);
+                Cliente.ValidaInput(clienteModificato.Cognome);
+                Cliente.ValidaInput(clienteModificato.Citta);
+                Cliente.ValidaData(clienteModificato.DataDiNascita.ToString("dd/MM/yyyy"));
 
-                VerificaIdUnivocoDB("Clienti", "ID", clienteModificato.ID);
+                using (MySqlConnection conn = new MySqlConnection(_connectionDB))
+                {
+                    conn.Open();
 
-                MySqlCommand cmd = new MySqlCommand("UPDATE Clienti SET Nome = @Nome, Cognome = @Cognome, Citta = @Citta, Sesso = @Sesso, DataDiNascita = @DataDiNascita WHERE ID = @ID", conn);
+                    using (MySqlCommand cmd = new MySqlCommand("UPDATE Clienti SET Nome = @Nome, Cognome = @Cognome, Citta = @Citta, Sesso = @Sesso, DataDiNascita = @DataDiNascita WHERE ID = @ID", conn))
+                    {
+                        cmd.Parameters.Add("@ID", MySqlDbType.VarChar, 5).Value = id;
+                        cmd.Parameters.Add("@Nome", MySqlDbType.VarChar, 50).Value = clienteModificato.Nome;
+                        cmd.Parameters.Add("@Cognome", MySqlDbType.VarChar, 50).Value = clienteModificato.Cognome;
+                        cmd.Parameters.Add("@Citta", MySqlDbType.VarChar, 50).Value = clienteModificato.Citta;
+                        cmd.Parameters.Add("@Sesso", MySqlDbType.VarChar, 1).Value = clienteModificato.Sesso.ToUpper();
+                        cmd.Parameters.Add("@DataDiNascita", MySqlDbType.Date).Value = clienteModificato.DataDiNascita;
 
-                cmd.Parameters.Add("@ID", MySqlDbType.VarChar, 5).Value = id;
-                cmd.Parameters.Add("@Nome", MySqlDbType.VarChar, 50).Value = clienteModificato.Nome;
-                cmd.Parameters.Add("@Cognome", MySqlDbType.VarChar, 50).Value = clienteModificato.Cognome;
-                cmd.Parameters.Add("@Citta", MySqlDbType.VarChar, 50).Value = clienteModificato.Citta;
-                cmd.Parameters.Add("@Sesso", MySqlDbType.VarChar, 1).Value = clienteModificato.Sesso;
-                cmd.Parameters.Add("@DataDiNascita", MySqlDbType.Date).Value = clienteModificato.DataDiNascita;
-
-                cmd.ExecuteNonQuery();
+                        cmd.ExecuteNonQuery();
+                    }
+                }
             }
             catch (MySqlException ex)
             {
-                throw new InvalidOperationException("Modifica del cliente non riuscita.", ex);
+                Console.WriteLine("Si è verificato un errore durante la modifica del cliente: " + ex.Message);
             }
             catch (Exception ex)
             {
-                throw new Exception("Si è verificato un errore sconosciuto durante la modifica del cliente.", ex);
-            }
-            // uso finally perché non ho lo "use" per la connessione del database
-            finally
-            {
-                if (conn != null)
-                {
-                    conn.Close();
-                }
+                Console.WriteLine("Si è verificato un errore sconosciuto durante la modifica del cliente: " + ex.Message);
             }
         }
 
@@ -187,7 +188,6 @@ namespace AssemblyGestore
         public bool EliminaCliente(string id)
         {
             int rowsAffected;
-
             try
             {
                 using (MySqlConnection conn = new MySqlConnection(_connectionDB))
@@ -213,11 +213,9 @@ namespace AssemblyGestore
             {
                 throw new InvalidOperationException("Nessun cliente trovato con l'ID specificato.");
             }
-
             // Controllo se la query ha eliminato almeno una riga
             return rowsAffected > 0;
         }
-
 
         private void VerificaIdUnivocoDB(string tableName, string columnName, string id)
         {
@@ -240,51 +238,5 @@ namespace AssemblyGestore
         {
             VerificaIdUnivocoDB("Clienti", "ID", id);
         }
-        ////Per sicurezza il metodosopra rimane privato, questo mi sevirà nel Program.cs
-        //public bool VerificaIdPubblico(string id)
-        //{
-        //    using (MySqlConnection conn = new MySqlConnection(_connectionDB))
-        //    {
-        //        conn.Open();
-        //        string query = $"SELECT COUNT(*) FROM Clienti WHERE ID = @ID";
-        //        MySqlCommand checkCmd = new MySqlCommand(query, conn);
-        //        checkCmd.Parameters.AddWithValue("@ID", id);
-        //        int count = Convert.ToInt32(checkCmd.ExecuteScalar());
-
-        //        return count > 0;
-        //    }
-        //}
-
     }
 }
-
-        //public bool VerificaIDUnivoco(string id)
-        //{
-        //    using (MySqlConnection connection = new MySqlConnection(_connectionDB))
-        //    {
-        //        connection.Open();
-
-        //        // Selezionara tutti gli ID dal database
-        //        string query = "SELECT ID FROM clienti";
-
-        //        // Crea un oggetto MySqlCommand, passando la query e la connessione al db (procedura standard)
-        //        using (MySqlCommand command = new MySqlCommand(query, connection))
-        //        {
-        //            // Legge gli ID dal database utilizzando il metodo ExecuteReader del command (MySqlCommand)
-        //            using (MySqlDataReader reader = command.ExecuteReader())
-        //            {
-        //                // Controlla se l'ID cercato esiste già nella lista degli ID letti dal database
-        //                //Il metodo Read() sposta il cursore del lettore sulla riga successiva del risultato, ritornando true se ci sono altre righe disponibili.
-        //                while (reader.Read())
-        //                {
-        //                    // GetString mi serve per leggere il valore della riga che cambierà di continuo grazie al while
-        //                    if (id == reader.GetString(0)) // Lo 0 serve per indicare che deve leggere le rihe della colonna 0
-        //                    {
-        //                        return false; // L'ID non è univoco
-        //                    }
-        //                }
-        //            }
-        //        }
-        //    }
-        //    return true; // L'ID è univoco
-        //}
