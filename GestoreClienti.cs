@@ -227,7 +227,7 @@ namespace AssemblyGestore
                 checkCmd.Parameters.AddWithValue("@ID", id);
                 int count = Convert.ToInt32(checkCmd.ExecuteScalar());
 
-                // Se non esite l'id cercato il count sarà uguale a 0
+                //Se non esite l'id cercato il count sarà uguale a 0
                 if (count > 0)
                 {
                     throw new InvalidOperationException("L'elemento con l'ID specificato è già presente nel database.");
