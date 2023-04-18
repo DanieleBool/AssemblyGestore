@@ -18,7 +18,7 @@ namespace AssemblyGestore
             _connectionDB = connectionDB;
         }
 
-        // CERCA //
+        //___// (1) CERCA CLIENTE //___//
         public List<Cliente> CercaCliente(string parametroRicerca, string scelta)
         {
             List<Cliente> clientiTrovati = new List<Cliente>();  // Crea una nuova lista vuota per memorizzare i clienti trovati
@@ -92,6 +92,7 @@ namespace AssemblyGestore
             return clientiTrovati;
         }
 
+        //___// (2) AGGIUNGI CLIENTE //___//
         public void AggiungiCliente(Cliente cliente)
         {
             if (cliente == null)
@@ -144,6 +145,7 @@ namespace AssemblyGestore
             }
         }
 
+        //___// (3) MODIFICA CLIENTE //___//
         public void ModificaCliente(string id, Cliente clienteModificato)
         {
             try
@@ -181,7 +183,7 @@ namespace AssemblyGestore
             }
         }
 
-        // ELIMINA //
+        //___// (4) ELIMINA CLIENTE //___//
         public bool EliminaCliente(string id)
         {
             int rowsAffected;
@@ -214,6 +216,7 @@ namespace AssemblyGestore
             return rowsAffected > 0;
         }
 
+        //___// FUNZIONI //___//
         private void VerificaIdUnivocoDB(string tableName, string columnName, string id)
         {
             using (MySqlConnection conn = new MySqlConnection(_connectionDB))
